@@ -1,0 +1,5 @@
+credentials
+shopConfig.py
+__pycache__
+*.pyc
+
