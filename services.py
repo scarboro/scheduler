@@ -1,5 +1,4 @@
-""" Abstracts creating Google Services.
-"""
+
 import os
 import httplib2
 from apiclient import discovery
@@ -40,10 +39,10 @@ class ServiceProvider(object):
 
     def __init__(self, *service_defs):
         self._credentials = self.fetch_credentials(*service_defs)
-        self._services = {s['name']: self.fetch_service(s) for s in service_defs}
+        self._services = {s['name']: self.create_service(s) for s in service_defs}
 
-    @staticmethod
-    def fetch_credentials(*service_defs):
+    def fetch_credentials(self, *service_defs):
+        ''' Acquires OAuth2 credentials '''
 
         # Attempt to retrieve existing credentials
         current_dir = os.getcwd()
@@ -65,11 +64,14 @@ class ServiceProvider(object):
 
         return credentials
 
-    def fetch_service(self, service_def):
+    def create_service(self, service_def):
+        ''' Initially creates a service '''
+
         authorization = self._credentials.authorize(httplib2.Http())
         service_def['kwargs']['http'] = authorization
         return discovery.build(*service_def['args'], **service_def['kwargs'])
 
-
     def get_service(self, service_name):
+        ''' Gets a service from the cache '''
+
         return self._services[service_name]

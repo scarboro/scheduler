@@ -67,12 +67,6 @@ class ShopRoster(object):
         self.techs = techs
         return self.techs
 
-    def matchShifts(self, shifts):
-        ''' Matches techs to shifts '''
-
-        for t, tech in enumerate(self.techs):
-            tech.matchShifts(t, shifts)
-
     def sendEmails(self):
         ''' Sends emails to techs '''
 

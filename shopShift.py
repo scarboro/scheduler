@@ -6,6 +6,7 @@ class Shift(object):
                 'event', 'old', 'tech', 'covers']
 
    def __init__(self, event, **kwargs):
+      ''' Initializes the shift from a Google Calendar event '''
 
       strptime = datetime.datetime.strptime
       hour = datetime.timedelta(hours = 1)
@@ -23,6 +24,8 @@ class Shift(object):
       self.old = self.start < cutoff if cutoff else True
 
    def __str__(self): 
+      ''' Pretty-prints shift information '''
+
       return '{:<25.25} {:>11} {:>5} {:>5}'.format(
          self.cal, 
          self.start.strftime('%a %m/%d'), 
@@ -30,6 +33,7 @@ class Shift(object):
          self.end.strftime('%H:%M'))
 
    def postEvent(self, gcalendar, techs):
+      ''' Returns a request to update the event on Google Calendar '''
 
       if self.old:
          return None

@@ -38,8 +38,10 @@ class ShopScheduler():
             self.anchor)
         
     def parseAvailability(self, shifts, techs):
+        ''' Determines which shifts each tech can work '''
 
         def canWork(tech, shift):
+            ''' Determines which shifts a tech can work '''
 
             permitted = {
                 'Rookie Tech': [
@@ -70,6 +72,7 @@ class ShopScheduler():
             if shift.cal not in permitted[tech.level]:
                 return False
             
+            # Maintenance supervisors work in their own shop
             if tech.last == 'Fedor' and 'Mustang' in shift.cal:
                 return False
             
@@ -90,6 +93,7 @@ class ShopScheduler():
         return [[canWork(tech, shift) for tech in techs] for shift in shifts]
 
     def parseConflicts(self, shifts):
+        ''' Determine which shifts overlap with one another '''
     
         roundDay = lambda dt: dt.replace(hour=0, minute=0, second=0, microsecond=0) + datetime.timedelta(days=1)
         
@@ -122,9 +126,6 @@ class ShopScheduler():
                     availability[s][shifts[c].tech] = False
 
         for s in range(len(self.calendar.shifts)-1, -1, -1):
-            if self.args.fill:
-                if shifts[s].tech:
-                    shifts[s].old = True
             if shifts[s].old:
                 del shifts[s]
                 del availability[s]
@@ -178,6 +179,7 @@ class ShopScheduler():
         print(solver.ObjectiveValue())
         model.Add(sum(all_vars) >= int(solver.ObjectiveValue()))
 
+        # Optimize the sum of differences
         model.Minimize(sum(abs_vars))
         solver = cp_model.CpSolver()
         status = solver.Solve(model)
@@ -193,6 +195,7 @@ class ShopScheduler():
             model.Add(pain_var == pain - abs_vars[t])
             model.AddAbsEquality(abs_abs_var, pain_var)
         
+        # Evenly distribute pain
         model.Minimize(sum(abs_abs_vars))
         solver = cp_model.CpSolver()
         status = solver.Solve(model)
@@ -251,20 +254,18 @@ if __name__ == '__main__':
         epilog='Brought to you by Scarborough'
     )
     parser.add_argument('week', type=int, help='week of the quarter')
-    group = parser.add_mutually_exclusive_group()
-    group.add_argument('-f', '--fill', action='store_true', help='fill only empty shifts for the week')
-    group.add_argument('-n', '--nuke', action='store_true', help='unassign all shifts for the week')
-    group.add_argument('-d', '--dry', action='store_true', help='print the schedule, but do not update the calendars')
+    parser.add_argument('-n', '--nuke', action='store_true', help='unassign all shifts for the week')
+    parser.add_argument('-d', '--dry', action='store_true', help='print the schedule, but do not update the calendars')
     args = parser.parse_args()
     
     s = ShopScheduler(args)
-        
-    if not args.nuke:
-        s.schedule()
     
-    else:
+    if args.nuke:
         print('Nuke week {}? y/N'.format(args.week))
         x = input()
         if x != 'y':
             exit(1)
-        s.calendar.nukeEvents()
+        if not args.dry:
+            s.calendar.nukeEvents()
+
+    s.schedule()

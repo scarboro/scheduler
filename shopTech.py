@@ -10,6 +10,7 @@ class Tech(object):
                  'level', 'hours', 'shifts', 'by_hour', 'by_day']
 
    def __init__(self, row, params, **kwargs):
+      ''' Initializes the Tech from a row of the results spreadsheet '''
 
       self.first    = row[params['col_index']['First Name']]
       self.last     = row[params['col_index']['Last Name']]
@@ -22,6 +23,7 @@ class Tech(object):
       self.by_hour, self.by_day = self.parseConflicts(row, params)
     
    def __str__(self):
+      ''' Pretty-prints information about the tech '''
 
       return '{:>12s} {:1.1s} {:>2} {:>2} {:>2} {:>2} {:>2}'.format(
          self.first, 
@@ -33,6 +35,7 @@ class Tech(object):
          len(self.getShifts(filter='Yellow')))
    
    def parseConflicts(self, row, params):
+      ''' Determines when the Tech is unavailabile '''
 
       by_hour = [[True for h in range(24)] for day in params['day_names']]
       by_day = [[True for d in range(7)] for week in params['week_names']]
@@ -48,6 +51,7 @@ class Tech(object):
       return by_hour, by_day
 
    def getShifts(self, **kwargs):
+      ''' Returns a subset of the Tech's shifts '''
       
       def match(shift):
          if 'filter' in kwargs and kwargs['filter'] not in shift.cal:
@@ -59,28 +63,12 @@ class Tech(object):
       return [shift for shift in self.shifts if match(shift)]
    
    def getHours(self, **kwargs):
+      ''' Returns the total length of a subset of the Techs's shifts '''
 
       return sum([shift.hours for shift in self.getShifts(**kwargs)])
 
-   def matchShifts(self, t, shifts):
-      
-      name = '{} {:1.1}'.format(self.first, self.last)
-
-      def match(shift):
-         if 'summary' not in shift.event:
-            return False
-         if self.nick and shift.event['summary'].find(self.nick) == 0:
-            return True
-         if shift.event['summary'].find(name) == 0:
-            return True
-         return False
-
-      for shift in shifts:
-         if match(shift):
-            shift.tech = t
-            self.shifts.append(shift)
-
    def sendEmail(self, gmail):
+      ''' Notifies the Tech of their shift assignment '''
 
       name = self.nick if self.nick else self.first
 
